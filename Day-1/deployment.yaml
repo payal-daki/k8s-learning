@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: my-deployment
-  namespace: default
+  # namespace: dev   ← remove this line!
 spec:
   replicas: 3
   selector:
