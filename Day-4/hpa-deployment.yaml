@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hpa-demo
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hpa-demo
+  template:
+    metadata:
+      labels:
+        app: hpa-demo
+    spec:
+      containers:
+        - name: hpa-demo
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"       # 0.1 CPU
+              memory: "128Mi"   # 128MB RAM
+            limits:
+              cpu: "200m"       # max 0.2 CPU
+              memory: "256Mi"   # max 256MB RAM

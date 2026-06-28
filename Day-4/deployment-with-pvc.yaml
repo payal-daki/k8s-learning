@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-with-storage
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-with-storage
+  template:
+    metadata:
+      labels:
+        app: app-with-storage
+    spec:
+      containers:
+        - name: app
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: my-storage
+              mountPath: /usr/share/nginx/html   # data saved here
+      volumes:
+        - name: my-storage
+          persistentVolumeClaim:
+            claimName: my-pvc                    # use our PVC
