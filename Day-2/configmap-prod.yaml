@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: prod          # prod namespace
+data:
+  APP_NAME: "my-app"
+  APP_PORT: "8080"
+  DB_HOST: "prod-database" # different from dev!
+  DB_PORT: "5432"
+  LOG_LEVEL: "error"       # less logging in prod
