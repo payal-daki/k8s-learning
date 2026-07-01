@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: dev
+data:
+  APP_NAME: "full-project"
+  APP_PORT: "80"
+  DB_HOST: "dev-database"
+  DB_PORT: "5432"
+  LOG_LEVEL: "debug"

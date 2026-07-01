@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: full-project
+  namespace: dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: full-project
+  template:
+    metadata:
+      labels:
+        app: full-project
+    spec:
+      containers:
+        - name: full-project
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secret
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: project-storage
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: project-storage
+          persistentVolumeClaim:
+            claimName: project-pvc
