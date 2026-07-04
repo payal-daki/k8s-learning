@@ -70,8 +70,8 @@ jobs:
       # Deploy Kubernetes Manifests
       - name: Deploy Application
         run: |
-          kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }}
-          kubectl apply -f k8s/service.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f ./Day-7/k8s-cicd/k8s/deployment.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f ./Day-7/k8s-cicd/k8s/service.yaml -n ${{ env.NAMESPACE }}
 
       # Update Deployment Image
       - name: Update Deployment Image
