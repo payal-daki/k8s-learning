@@ -13,90 +13,81 @@ env:
 
 jobs:
   build-and-deploy:
-    name: Build + Deploy to EKS
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1 - Checkout code
+      # Checkout repository
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Step 2 - Configure AWS credentials
-      - name: Configure AWS credentials
+      # Configure AWS Credentials
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      # Step 3 - Login to ECR
+      # Login to Amazon ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Step 4 - Build Docker image
-      - name: Build Docker image
+      # Build Docker Image
+      - name: Build Docker Image
         run: |
           docker build -t $ECR_REPOSITORY ./app
-          echo "Image built successfully ✅"
 
-      # Step 5 - Tag image with commit SHA
-      - name: Tag Docker image
+      # Tag Image
+      - name: Tag Docker Image
         run: |
           ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}
+
           docker tag $ECR_REPOSITORY:latest $ECR_URI:latest
           docker tag $ECR_REPOSITORY:latest $ECR_URI:${{ github.sha }}
+
           echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
 
-      # Step 6 - Push to ECR
-      - name: Push to ECR
+      # Push Image
+      - name: Push Docker Image
         run: |
           docker push $ECR_URI:latest
           docker push $ECR_URI:${{ github.sha }}
-          echo "Pushed to ECR ✅"
 
-      # Step 7 - Update kubeconfig for EKS
-      - name: Update kubeconfig
+      # Update kubeconfig
+      - name: Configure kubectl
         run: |
           aws eks update-kubeconfig \
             --name ${{ env.EKS_CLUSTER }} \
             --region ${{ env.AWS_REGION }}
 
-      # Step 8 - Create namespace if not exists
-      - name: Create namespace
+      # Create Namespace if not exists
+      - name: Create Namespace
         run: |
           kubectl create namespace ${{ env.NAMESPACE }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # Step 9 - Update image in deployment
-      - name: Update image in deployment
-        run: |
-          sed -i "s|\${{ AWS_ACCOUNT_ID }}|${{ secrets.AWS_ACCOUNT_ID }}|g" k8s/deployment.yaml
-
-      # Step 10 - Deploy to EKS
-      - name: Deploy to EKS
+      # Deploy Kubernetes Manifests
+      - name: Deploy Application
         run: |
           kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }}
           kubectl apply -f k8s/service.yaml -n ${{ env.NAMESPACE }}
-          echo "Deployed to EKS ✅"
 
-      # Step 11 - Update image to latest
-      - name: Update deployment image
+      # Update Deployment Image
+      - name: Update Deployment Image
         run: |
           kubectl set image deployment/cicd-demo \
-            cicd-demo=$ECR_URI:${{ github.sha }} \
-            -n ${{ env.NAMESPACE }}
+          cicd-demo=$ECR_URI:${{ github.sha }} \
+          -n ${{ env.NAMESPACE }}
 
-      # Step 12 - Wait for rollout
-      - name: Wait for deployment
+      # Wait for Rollout
+      - name: Wait for Rollout
         run: |
           kubectl rollout status deployment/cicd-demo \
-            -n ${{ env.NAMESPACE }} \
-            --timeout=120s
-          echo "Rollout complete ✅"
+          -n ${{ env.NAMESPACE }} \
+          --timeout=180s
 
-      # Step 13 - Get app URL
-      - name: Get app URL
+      # Show Service
+      - name: Get Service
         run: |
-          kubectl get service cicd-demo-service \
-            -n ${{ env.NAMESPACE }}
+          kubectl get svc -n ${{ env.NAMESPACE }}
